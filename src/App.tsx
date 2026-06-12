@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import './App.css'
-import { allTopics, priorityTopicIds, roadmapPhases } from './roadmap'
+import { allTopics, roadmapPhases } from './roadmap'
 
 type TabId = 'roadmap' | 'daily' | 'flashcards'
 
@@ -31,8 +31,6 @@ type AppState = {
   currentDailyTopicId: string
   topicProgress: Record<string, TopicProgress>
   activityDates: string[]
-  focusMinutes: number
-  focusEndsAt?: number
   drillSession?: DrillSession
 }
 
@@ -67,15 +65,24 @@ const createDefaultProgress = () =>
     ]),
   ) satisfies Record<string, TopicProgress>
 
-const pickNextTopic = (progress: Record<string, TopicProgress>) => {
-  const priority = allTopics.find((topic) => !progress[topic.id]?.completed && priorityTopicIds.includes(topic.id))
+const pickNextTopic = (progress: Record<string, TopicProgress>, currentTopicId?: string) => {
+  const unfinished = allTopics.filter((topic) => !progress[topic.id]?.completed)
 
-  if (priority) {
-    return priority.id
+  if (unfinished.length === 0) {
+    return currentTopicId ?? allTopics[0].id
   }
 
-  const nextUnfinished = allTopics.find((topic) => !progress[topic.id]?.completed)
-  return nextUnfinished?.id ?? allTopics[0].id
+  if (!currentTopicId) {
+    return unfinished[0].id
+  }
+
+  const currentIndex = unfinished.findIndex((topic) => topic.id === currentTopicId)
+
+  if (currentIndex === -1) {
+    return unfinished[0].id
+  }
+
+  return unfinished[(currentIndex + 1) % unfinished.length].id
 }
 
 const createInitialState = (): AppState => {
@@ -86,7 +93,6 @@ const createInitialState = (): AppState => {
     currentDailyTopicId: pickNextTopic(topicProgress),
     topicProgress,
     activityDates: [],
-    focusMinutes: 20,
   }
 }
 
@@ -112,10 +118,7 @@ const loadState = () => {
       ...createInitialState(),
       ...parsed,
       topicProgress,
-      currentDailyTopicId:
-        parsed.currentDailyTopicId && topicProgress[parsed.currentDailyTopicId]
-          ? parsed.currentDailyTopicId
-          : pickNextTopic(topicProgress),
+      currentDailyTopicId: pickNextTopic(topicProgress, parsed.currentDailyTopicId),
     }
   } catch {
     return createInitialState()
@@ -150,43 +153,10 @@ const buildDrillCards = (progress: Record<string, TopicProgress>) => {
 
 function App() {
   const [state, setState] = useState<AppState>(loadState)
-  const [timeLeft, setTimeLeft] = useState(0)
 
   useEffect(() => {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
   }, [state])
-
-  useEffect(() => {
-    if (!state.focusEndsAt) {
-      setTimeLeft(0)
-      return
-    }
-
-    const tick = () => {
-      const seconds = Math.max(0, Math.floor((state.focusEndsAt! - Date.now()) / 1000))
-      setTimeLeft(seconds)
-
-      if (seconds === 0) {
-        setState((current) => {
-          if (!current.focusEndsAt) {
-            return current
-          }
-
-          return {
-            ...current,
-            focusEndsAt: undefined,
-            activityDates: current.activityDates.includes(todayKey())
-              ? current.activityDates
-              : [...current.activityDates, todayKey()],
-          }
-        })
-      }
-    }
-
-    tick()
-    const timer = window.setInterval(tick, 1000)
-    return () => window.clearInterval(timer)
-  }, [state.focusEndsAt])
 
   const topicLookup = useMemo(
     () => Object.fromEntries(allTopics.map((topic) => [topic.id, topic])),
@@ -240,6 +210,9 @@ function App() {
     ? drillSession.currentIndex >= drillSession.cards.length
     : false
 
+  const markActivity = (dates: string[]) =>
+    dates.includes(todayKey()) ? dates : [...dates, todayKey()]
+
   const updateTopicProgress = (topicId: string, updater: (current: TopicProgress) => TopicProgress) => {
     setState((current) => ({
       ...current,
@@ -247,13 +220,11 @@ function App() {
         ...current.topicProgress,
         [topicId]: updater(current.topicProgress[topicId]),
       },
-      activityDates: current.activityDates.includes(todayKey())
-        ? current.activityDates
-        : [...current.activityDates, todayKey()],
+      activityDates: markActivity(current.activityDates),
     }))
   }
 
-  const setDailyTopic = (topicId: string) => {
+  const openTopic = (topicId: string) => {
     setState((current) => ({
       ...current,
       currentDailyTopicId: topicId,
@@ -261,12 +232,26 @@ function App() {
     }))
   }
 
-  const advanceDailyTopic = () => {
-    const unfinished = allTopics.filter((topic) => !state.topicProgress[topic.id]?.completed)
-    const pool = unfinished.length > 0 ? unfinished : allTopics
-    const currentIndex = pool.findIndex((topic) => topic.id === state.currentDailyTopicId)
-    const nextTopic = pool[(currentIndex + 1 + pool.length) % pool.length]
-    setDailyTopic(nextTopic.id)
+  const completeTopicAndAdvance = (topicId: string) => {
+    setState((current) => {
+      const topicProgress = {
+        ...current.topicProgress,
+        [topicId]: {
+          ...current.topicProgress[topicId],
+          completed: true,
+          articleReads: 2,
+          mastery: Math.max(current.topicProgress[topicId].mastery, 45),
+          completedAt: new Date().toISOString(),
+        },
+      }
+
+      return {
+        ...current,
+        topicProgress,
+        currentDailyTopicId: pickNextTopic(topicProgress, topicId),
+        activityDates: markActivity(current.activityDates),
+      }
+    })
   }
 
   const startDrill = () => {
@@ -307,9 +292,7 @@ function App() {
           lastReviewed: new Date().toISOString(),
         },
       },
-      activityDates: current.activityDates.includes(todayKey())
-        ? current.activityDates
-        : [...current.activityDates, todayKey()],
+      activityDates: markActivity(current.activityDates),
       drillSession: current.drillSession
         ? {
             ...current.drillSession,
@@ -328,16 +311,7 @@ function App() {
 
   return (
     <div className="app-shell">
-      <header className="hero-panel">
-        <div>
-          <p className="eyebrow">Interview Prep Operating System</p>
-          <h1>Greenroom</h1>
-          <p className="hero-copy">
-            A white-and-green study cockpit for backend, system design, and AI engineer prep. Pick the
-            next topic, read the best material, and get grilled daily until recall is automatic.
-          </p>
-        </div>
-
+      <header className="hero-panel metrics-only">
         <div className="hero-stats">
           <article>
             <span>Path Progress</span>
@@ -352,56 +326,10 @@ function App() {
           <article>
             <span>Consistency Streak</span>
             <strong>{streak} day{streak === 1 ? '' : 's'}</strong>
-            <small>Any read, review, or focus sprint counts</small>
+            <small>Any read, review, or drill counts</small>
           </article>
         </div>
       </header>
-
-      <section className="focus-strip">
-        <div>
-          <p className="strip-label">Today’s next action</p>
-          <strong>{dailyTopic.title}</strong>
-          <span>{dailyTopic.phaseTitle}</span>
-        </div>
-
-        <div className="focus-actions">
-          <label className="minutes-picker">
-            Sprint
-            <select
-              value={state.focusMinutes}
-              onChange={(event) =>
-                setState((current) => ({
-                  ...current,
-                  focusMinutes: Number(event.target.value),
-                }))
-              }
-            >
-              <option value={5}>5 min restart</option>
-              <option value={20}>20 min focus</option>
-              <option value={30}>30 min deep dive</option>
-            </select>
-          </label>
-
-          <button
-            className="primary-button"
-            type="button"
-            onClick={() =>
-              setState((current) => ({
-                ...current,
-                focusEndsAt: Date.now() + current.focusMinutes * 60 * 1000,
-              }))
-            }
-          >
-            {state.focusEndsAt ? 'Restart timer' : 'Start timer'}
-          </button>
-
-          <div className="timer-pill">
-            {state.focusEndsAt
-              ? `${Math.floor(timeLeft / 60)}:${`${timeLeft % 60}`.padStart(2, '0')} left`
-              : 'No timer running'}
-          </div>
-        </div>
-      </section>
 
       <nav className="tab-row" aria-label="Primary">
         {[
@@ -425,7 +353,7 @@ function App() {
         ))}
       </nav>
 
-      <main className="content-grid">
+      <main className="content-grid single-column">
         <section className="main-panel">
           {state.activeTab === 'roadmap' && (
             <div className="stack">
@@ -433,10 +361,10 @@ function App() {
                 <div className="panel-header">
                   <div>
                     <p className="strip-label">Roadmap</p>
-                    <h2>Modules with visible progress</h2>
+                    <h2>Click any topic to open its reading material</h2>
                   </div>
-                  <button className="ghost-button" type="button" onClick={() => setDailyTopic(pickNextTopic(state.topicProgress))}>
-                    Jump to next priority
+                  <button className="ghost-button" type="button" onClick={() => openTopic(pickNextTopic(state.topicProgress))}>
+                    Open next unfinished
                   </button>
                 </div>
 
@@ -475,22 +403,34 @@ function App() {
                       const progress = state.topicProgress[topic.id]
 
                       return (
-                        <label className={progress.completed ? 'topic-chip done' : 'topic-chip'} key={topic.id}>
-                          <input
-                            type="checkbox"
-                            checked={progress.completed}
-                            onChange={() =>
-                              updateTopicProgress(topic.id, (current) => ({
-                                ...current,
-                                completed: !current.completed,
-                                completedAt: !current.completed ? new Date().toISOString() : undefined,
-                                mastery: !current.completed ? Math.max(current.mastery, 35) : current.mastery,
-                              }))
-                            }
-                          />
-                          <span>{topic.title}</span>
-                          <small>{progress.completed ? `${progress.mastery}% mastery` : 'Not done'}</small>
-                        </label>
+                        <button
+                          className={progress.completed ? 'topic-chip done topic-button' : 'topic-chip topic-button'}
+                          key={topic.id}
+                          type="button"
+                          onClick={() => openTopic(topic.id)}
+                        >
+                          <div className="topic-chip-top">
+                            <span>{topic.title}</span>
+                            <input
+                              type="checkbox"
+                              checked={progress.completed}
+                              onChange={(event) => {
+                                event.stopPropagation()
+                                updateTopicProgress(topic.id, (current) => ({
+                                  ...current,
+                                  completed: !current.completed,
+                                  completedAt: !current.completed ? new Date().toISOString() : undefined,
+                                  articleReads: !current.completed ? Math.max(current.articleReads, 2) : current.articleReads,
+                                  mastery: !current.completed ? Math.max(current.mastery, 35) : current.mastery,
+                                }))
+                              }}
+                              onClick={(event) => event.stopPropagation()}
+                            />
+                          </div>
+                          <small>
+                            {progress.completed ? `${progress.mastery}% mastery` : `${progress.articleReads}/2 articles read`}
+                          </small>
+                        </button>
                       )
                     })}
                   </div>
@@ -514,12 +454,18 @@ function App() {
                   </div>
                 </div>
 
-                <div className="daily-grid">
+                <div className="daily-grid single">
                   <div className="daily-column">
-                    <h3>Read these first</h3>
+                    <h3>Articles</h3>
                     <div className="resource-list">
                       {dailyTopic.resources.map((resource) => (
-                        <a key={resource.url} href={resource.url} target="_blank" rel="noreferrer" className="resource-card">
+                        <a
+                          key={resource.url}
+                          href={resource.url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="resource-card"
+                        >
                           <span>{resource.source}</span>
                           <strong>{resource.title}</strong>
                         </a>
@@ -528,7 +474,7 @@ function App() {
                   </div>
 
                   <div className="daily-column">
-                    <h3>Why this matters</h3>
+                    <h3>Content</h3>
                     <ul className="clean-list">
                       <li>{dailyTopic.whyItExists}</li>
                       <li>{dailyTopic.interviewAngle}</li>
@@ -554,39 +500,13 @@ function App() {
                   <button
                     className="secondary-button"
                     type="button"
-                    onClick={() =>
-                      updateTopicProgress(dailyTopic.id, (current) => ({
-                        ...current,
-                        completed: true,
-                        articleReads: 2,
-                        mastery: Math.max(current.mastery, 45),
-                        completedAt: new Date().toISOString(),
-                      }))
-                    }
+                    onClick={() => completeTopicAndAdvance(dailyTopic.id)}
                   >
                     Mark topic complete
                   </button>
-                  <button className="ghost-button" type="button" onClick={advanceDailyTopic}>
-                    Pick another topic
+                  <button className="ghost-button" type="button" onClick={() => openTopic(pickNextTopic(state.topicProgress, dailyTopic.id))}>
+                    Next topic
                   </button>
-                </div>
-              </article>
-
-              <article className="panel-card">
-                <h3>ADHD-friendly routine</h3>
-                <div className="habit-grid">
-                  <div>
-                    <strong>1. Start tiny</strong>
-                    <p>Use the 5-minute restart when momentum is low. Starting counts more than perfect completion.</p>
-                  </div>
-                  <div>
-                    <strong>2. Keep one target</strong>
-                    <p>This tab always keeps exactly one active topic in front of you so you do not context-switch yourself to death.</p>
-                  </div>
-                  <div>
-                    <strong>3. Close the loop fast</strong>
-                    <p>As soon as you finish reading, mark the topic done and send it to flashcards while the memory is fresh.</p>
-                  </div>
                 </div>
               </article>
             </div>
@@ -600,18 +520,27 @@ function App() {
                     <p className="strip-label">Flashcards</p>
                     <h2>Interview-style random drills</h2>
                   </div>
-                  <button className="primary-button" type="button" onClick={startDrill} disabled={finishedCards.length === 0}>
+                  <button
+                    className="primary-button"
+                    type="button"
+                    onClick={startDrill}
+                    disabled={finishedCards.length === 0}
+                  >
                     Start daily grill
                   </button>
                 </div>
 
                 {finishedCards.length === 0 && (
-                  <p className="empty-state">Finish a few topics first. Completed topics automatically unlock interview questions here.</p>
+                  <p className="empty-state">
+                    Finish a few topics first. Completed topics automatically unlock interview questions here.
+                  </p>
                 )}
 
                 {drillSession && !completedDrill && currentCard && (
                   <div className="drill-card">
-                    <p className="strip-label">Question {drillSession.currentIndex + 1} of {drillSession.cards.length}</p>
+                    <p className="strip-label">
+                      Question {drillSession.currentIndex + 1} of {drillSession.cards.length}
+                    </p>
                     <h3>{topicLookup[currentCard.topicId].title}</h3>
                     <p className="question-copy">{currentCard.question}</p>
 
@@ -640,7 +569,12 @@ function App() {
                     {drillSession.reveal && (
                       <div className="score-row">
                         {[1, 2, 3, 4, 5].map((score) => (
-                          <button key={score} type="button" className="score-button" onClick={() => scoreCard(score)}>
+                          <button
+                            key={score}
+                            type="button"
+                            className="score-button"
+                            onClick={() => scoreCard(score)}
+                          >
                             {score}
                           </button>
                         ))}
@@ -676,12 +610,17 @@ function App() {
                   {finishedTopics.map((topic) => {
                     const progress = state.topicProgress[topic.id]
                     return (
-                      <div className="topic-chip done" key={topic.id}>
+                      <button
+                        className="topic-chip done topic-button"
+                        key={topic.id}
+                        type="button"
+                        onClick={() => openTopic(topic.id)}
+                      >
                         <span>{topic.title}</span>
                         <small>
                           {progress.reviews} reviews • last {formatDate(progress.lastReviewed)}
                         </small>
-                      </div>
+                      </button>
                     )
                   })}
                 </div>
@@ -689,36 +628,6 @@ function App() {
             </div>
           )}
         </section>
-
-        <aside className="side-panel">
-          <article className="panel-card">
-            <p className="strip-label">Priority track</p>
-            <h3>Start here first</h3>
-            <div className="priority-list">
-              {priorityTopicIds.map((topicId) => {
-                const topic = topicLookup[topicId]
-                const progress = state.topicProgress[topicId]
-
-                return (
-                  <button key={topicId} type="button" className="priority-item" onClick={() => setDailyTopic(topicId)}>
-                    <span>{topic.title}</span>
-                    <small>{progress.completed ? 'Done' : `${progress.mastery}% ready`}</small>
-                  </button>
-                )
-              })}
-            </div>
-          </article>
-
-          <article className="panel-card">
-            <p className="strip-label">Brain-friendly rules</p>
-            <h3>Keep the system easy to obey</h3>
-            <ul className="clean-list">
-              <li>Never choose from the full list when you are tired. Use the priority track or today’s topic.</li>
-              <li>One read session, one completed topic, one drill. Small loops beat heroic plans.</li>
-              <li>If you miss a day, resume with a 5-minute restart instead of trying to make up everything.</li>
-            </ul>
-          </article>
-        </aside>
       </main>
     </div>
   )
