@@ -1,0 +1,74 @@
+:root {
+  font-family:
+    "Satoshi",
+    "Avenir Next",
+    "Segoe UI",
+    sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  color: #355443;
+  background:
+    radial-gradient(circle at top, rgba(120, 214, 151, 0.2), transparent 24%),
+    linear-gradient(180deg, #fbfffc 0%, #f2fbf4 100%);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  --text-strong: #143222;
+  --muted: #587362;
+  --border: rgba(20, 50, 34, 0.08);
+  --shadow: 0 18px 42px rgba(34, 91, 58, 0.08);
+  --surface: rgba(255, 255, 255, 0.88);
+  --surface-soft: rgba(242, 251, 244, 0.88);
+  --accent: #58c47a;
+  --accent-deep: #0f6634;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+}
+
+button,
+input,
+select {
+  font: inherit;
+}
+
+a {
+  color: inherit;
+}
+
+h1,
+h2,
+h3,
+p {
+  margin-bottom: 0;
+}
+
+h1 {
+  margin-top: 0;
+  font-size: clamp(2.8rem, 8vw, 5rem);
+  line-height: 0.95;
+  letter-spacing: -0.05em;
+  color: var(--text-strong);
+}
+
+h2 {
+  font-size: clamp(1.5rem, 3.2vw, 2.1rem);
+  color: var(--text-strong);
+}
+
+h3 {
+  font-size: 1.15rem;
+  color: var(--text-strong);
+}
+
+#root {
+  min-height: 100vh;
+}
