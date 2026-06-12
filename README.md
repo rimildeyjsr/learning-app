@@ -2,7 +2,7 @@
 
 Interview-prep learning app for backend, system design, and AI engineer topics.
 
-## What it does
+## What it does and how
 
 - Tracks progress across the full roadmap you pasted in
 - Shows module completion and total path completion
