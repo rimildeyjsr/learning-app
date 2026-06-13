@@ -53,6 +53,18 @@ const makeFlashcards = (topic: string): Flashcard[] => [
 ]
 
 const topicOverrides: Record<string, Resource[]> = {
+  'how-the-internet-works': [
+    {
+      title: 'How the Web works',
+      url: 'https://developer.mozilla.org/en-US/docs/Learn_web_development/Getting_started/Environment_setup/How_the_Web_works',
+      source: 'MDN',
+    },
+    {
+      title: 'What is the Internet?',
+      url: 'https://www.cloudflare.com/learning/network-layer/what-is-the-internet/',
+      source: 'Cloudflare',
+    },
+  ],
   'http-basics': [
     {
       title: 'HTTP overview',
@@ -62,6 +74,18 @@ const topicOverrides: Record<string, Resource[]> = {
     {
       title: 'What is HTTP?',
       url: 'https://www.cloudflare.com/learning/ddos/glossary/hypertext-transfer-protocol-http/',
+      source: 'Cloudflare',
+    },
+  ],
+  'https-basics': [
+    {
+      title: 'HTTPS',
+      url: 'https://developer.mozilla.org/en-US/docs/Glossary/HTTPS',
+      source: 'MDN',
+    },
+    {
+      title: 'What is HTTPS?',
+      url: 'https://www.cloudflare.com/learning/ssl/what-is-https/',
       source: 'Cloudflare',
     },
   ],
@@ -77,6 +101,126 @@ const topicOverrides: Record<string, Resource[]> = {
       source: 'MDN',
     },
   ],
+  'domain-names': [
+    {
+      title: 'What is a domain name?',
+      url: 'https://developer.mozilla.org/en-US/docs/Learn_web_development/Howto/Web_mechanics/What_is_a_domain_name',
+      source: 'MDN',
+    },
+    {
+      title: 'What is a domain name?',
+      url: 'https://www.cloudflare.com/learning/dns/glossary/what-is-a-domain-name/',
+      source: 'Cloudflare',
+    },
+  ],
+  hosting: [
+    {
+      title: 'What is web hosting?',
+      url: 'https://aws.amazon.com/what-is/web-hosting/',
+      source: 'AWS',
+    },
+    {
+      title: 'What is web hosting?',
+      url: 'https://www.cloudflare.com/learning/performance/glossary/web-hosting/',
+      source: 'Cloudflare',
+    },
+  ],
+  'browsers-and-servers': [
+    {
+      title: 'Client-server overview',
+      url: 'https://developer.mozilla.org/en-US/docs/Learn_web_development/Extensions/Server-side/First_steps/Client-Server_overview',
+      source: 'MDN',
+    },
+    {
+      title: 'What is a web server?',
+      url: 'https://developer.mozilla.org/en-US/docs/Learn_web_development/Howto/Web_mechanics/What_is_a_web_server',
+      source: 'MDN',
+    },
+  ],
+  'client-server-architecture': [
+    {
+      title: 'Client-server overview',
+      url: 'https://developer.mozilla.org/en-US/docs/Learn_web_development/Extensions/Server-side/First_steps/Client-Server_overview',
+      source: 'MDN',
+    },
+    {
+      title: 'Client-server architecture style',
+      url: 'https://learn.microsoft.com/en-us/azure/architecture/guide/architecture-styles/client-server',
+      source: 'Microsoft',
+    },
+  ],
+  'request-response-lifecycle': [
+    {
+      title: 'HTTP messages',
+      url: 'https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/Messages',
+      source: 'MDN',
+    },
+    {
+      title: 'What happens when you type a URL into your browser?',
+      url: 'https://www.cloudflare.com/learning/dns/what-happens-when-you-type-a-url-into-your-browser/',
+      source: 'Cloudflare',
+    },
+  ],
+  'web-servers-nginx-apache-caddy': [
+    {
+      title: 'Beginner’s guide',
+      url: 'https://nginx.org/en/docs/beginners_guide.html',
+      source: 'Nginx',
+    },
+    {
+      title: 'Apache HTTP Server documentation',
+      url: 'https://httpd.apache.org/docs/2.4/',
+      source: 'Apache',
+    },
+  ],
+  'application-servers': [
+    {
+      title: 'What is an application server?',
+      url: 'https://www.redhat.com/en/topics/middleware/what-is-application-server',
+      source: 'Red Hat',
+    },
+    {
+      title: 'What is an application server?',
+      url: 'https://www.ibm.com/think/topics/application-server',
+      source: 'IBM',
+    },
+  ],
+  'static-vs-dynamic-content': [
+    {
+      title: 'What is a static website?',
+      url: 'https://developer.mozilla.org/en-US/docs/Learn_web_development/Howto/Tools_and_setup/What_is_a_static_website',
+      source: 'MDN',
+    },
+    {
+      title: 'Server-side website programming first steps',
+      url: 'https://developer.mozilla.org/en-US/docs/Learn_web_development/Extensions/Server-side/First_steps/Introduction',
+      source: 'MDN',
+    },
+  ],
+  'reverse-proxy': [
+    {
+      title: 'What is a reverse proxy?',
+      url: 'https://www.cloudflare.com/learning/cdn/glossary/reverse-proxy/',
+      source: 'Cloudflare',
+    },
+    {
+      title: 'Reverse proxy',
+      url: 'https://docs.nginx.com/nginx/admin-guide/web-server/reverse-proxy/',
+      source: 'Nginx',
+    },
+  ],
+  'cdn-basics': [
+    {
+      title: 'What is a CDN?',
+      url: 'https://www.cloudflare.com/learning/cdn/what-is-a-cdn/',
+      source: 'Cloudflare',
+    },
+    {
+      title: 'What is a CDN?',
+      url: 'https://aws.amazon.com/what-is/cdn/',
+      source: 'AWS',
+    },
+  ],
   'rest-apis': [
     {
       title: 'A beginner’s guide to REST',
@@ -87,6 +231,126 @@ const topicOverrides: Record<string, Resource[]> = {
       title: 'REST API design best practices',
       url: 'https://learn.microsoft.com/en-us/azure/architecture/best-practices/api-design',
       source: 'Microsoft',
+    },
+  ],
+  'json-apis': [
+    {
+      title: 'Working with JSON',
+      url: 'https://developer.mozilla.org/en-US/docs/Learn_web_development/Core/Scripting/JSON',
+      source: 'MDN',
+    },
+    {
+      title: 'JSON:API',
+      url: 'https://jsonapi.org/',
+      source: 'JSON:API',
+    },
+  ],
+  'openapi-specs': [
+    {
+      title: 'What is OpenAPI?',
+      url: 'https://www.openapis.org/what-is-openapi',
+      source: 'OpenAPI Initiative',
+    },
+    {
+      title: 'OpenAPI specification',
+      url: 'https://swagger.io/specification/',
+      source: 'Swagger',
+    },
+  ],
+  hateoas: [
+    {
+      title: 'HATEOAS and REST API implementation',
+      url: 'https://restfulapi.net/hateoas/',
+      source: 'REST API Tutorial',
+    },
+    {
+      title: 'API design best practices',
+      url: 'https://learn.microsoft.com/en-us/azure/architecture/best-practices/api-design',
+      source: 'Microsoft',
+    },
+  ],
+  soap: [
+    {
+      title: 'SOAP vs. REST',
+      url: 'https://aws.amazon.com/compare/the-difference-between-soap-rest/',
+      source: 'AWS',
+    },
+    {
+      title: 'SOAP vs. REST',
+      url: 'https://www.redhat.com/en/topics/integration/whats-the-difference-between-soap-rest',
+      source: 'Red Hat',
+    },
+  ],
+  grpc: [
+    {
+      title: 'Introduction to gRPC',
+      url: 'https://grpc.io/docs/what-is-grpc/introduction/',
+      source: 'gRPC',
+    },
+    {
+      title: 'What is gRPC?',
+      url: 'https://www.cloudflare.com/learning/performance/what-is-grpc/',
+      source: 'Cloudflare',
+    },
+  ],
+  graphql: [
+    {
+      title: 'GraphQL learn',
+      url: 'https://graphql.org/learn/',
+      source: 'GraphQL',
+    },
+    {
+      title: 'Schema basics',
+      url: 'https://www.apollographql.com/docs/apollo-server/schema/schema/',
+      source: 'Apollo',
+    },
+  ],
+  'api-versioning': [
+    {
+      title: 'API design best practices',
+      url: 'https://learn.microsoft.com/en-us/azure/architecture/best-practices/api-design',
+      source: 'Microsoft',
+    },
+    {
+      title: 'Versioning',
+      url: 'https://docs.stripe.com/api/versioning',
+      source: 'Stripe',
+    },
+  ],
+  'api-pagination': [
+    {
+      title: 'API design best practices',
+      url: 'https://learn.microsoft.com/en-us/azure/architecture/best-practices/api-design',
+      source: 'Microsoft',
+    },
+    {
+      title: 'API pagination best practices',
+      url: 'https://www.merge.dev/blog/api-pagination-best-practices',
+      source: 'Merge',
+    },
+  ],
+  'api-filtering-and-sorting': [
+    {
+      title: 'Filtering',
+      url: 'https://jsonapi.org/recommendations/#filtering',
+      source: 'JSON:API',
+    },
+    {
+      title: 'API design best practices',
+      url: 'https://learn.microsoft.com/en-us/azure/architecture/best-practices/api-design',
+      source: 'Microsoft',
+    },
+  ],
+  'idempotent-api-operations': [
+    {
+      title: 'Idempotent',
+      url: 'https://developer.mozilla.org/en-US/docs/Glossary/Idempotent',
+      source: 'MDN',
+    },
+    {
+      title: 'Idempotent requests',
+      url: 'https://docs.stripe.com/api/idempotent_requests',
+      source: 'Stripe',
     },
   ],
   'authentication-vs-authorization': [
